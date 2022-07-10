@@ -7,5 +7,5 @@
  * in the user manual at https://docs.gradle.org/7.0.2/userguide/multi_project_builds.html
  */
 
-rootProject.name = 'ebd-debugging-subscribe-and-save'
+rootProject.name = 'ebd-unit-testing-subscribe-and-save'
 include 'LibrariesAndUtilities:LessonPlanResources'

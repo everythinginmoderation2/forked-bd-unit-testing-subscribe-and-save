@@ -1,274 +1,89 @@
-# Subscribe And Save Debugging
-
-## Gitrepo
-
-**GitHub repo:** [ebd-debugging-subscribe-and-save](https://github.com/LambdaSchool/ebd-debugging-subscribe-and-save)
+# Subscribe and Save Revisited: Unit Testing updateSubscription
 
 ## Background
 
-This Subscribe and Save MLP (Minimum Loveable Product) provides the functionality to create subscriptions and retrieve
-them (OR DOES IT???). In this project we are going to be working on debugging a few issues with our service.
+This Subscribe and Save MLP (Minimum Loveable Product) provides the functionality to create subscriptions and retrieve 
+them. Some of you may have seen it in our Debugging lesson a couple of weeks ago.
 
-Let's first take a look at the class diagram and discuss it as a class. If you already installed the
-`PlantUML integration` plugin, you can open Activity_CD.plantuml in IntelliJ. ***NOTE:*** Light grey classes are classes
-we will assume to be tested and functional today. Feel free to step through them and take a look while debugging, but we
-can assume our bugs aren't hiding in there.
+If we haven't already, let's take a look at the class diagram and discuss it as a class.
+If you already installed the `PlantUML integration` plugin, you can open Activity_CD.plantuml in IntelliJ.
+***NOTE:*** Light grey classes are classes we will assume to be tested and functional today.
+Feel free to step through them and take a look while debugging, but we can assume our bugs aren't
+hiding in there. 
 
-Now that we are familiar with the class structure, we will get started in the really awesome debug tool someone made
-for us! Open up `SubscriptionDebugUtil`, which is located in this java package, and give it a spin by running the `main`
-method. (That little green arrow in the left margin will run it for you.) This will start up the debug tool and ask you  
-you what action you would like to take. Go ahead and try to create a `Subscription` by typing in the `SUBSCRIBE` command
-and then entering some bogus data. **Use the Data at the bottom of this README file for `Customer id` and `asin`.**
+Now that we've got the basics of creating JUnit tests, we've rewritten some of our unit tests from before
+as proper JUnit tests (rather than methods we call from a `main()` method--which works ok, but we've found
+it way more convenient to use a framework like JUnit for several reasons, including being able to run
+individual tests within IntelliJ, and because we can run the tests and get individual test failure reports
+when we build the package).
 
- Did it work? Did you see the tool go all angry and spit out a bunch of red text? You likely saw an
-`IllegalArgumentException` with a message letting you know  that you didn't provide all the right information.
+Around the same time, due to lots of +1s on the SIM for an update API, one of our colleagues has started
+to implement the promised "update" API that allows updating an existing subscription.
+The primary use case is updating the frequency on an existing subscription, but the back end will allow
+changing the customer or ASIN as well.
 
-## Bug 1: Ensure all Illegal Inputs To Subscribe Result in Helpful Error Message
-### Find the bug
+This development is only just getting started, so a first cut at the implementation has been added to the
+`SubscriptionFileStorage` class, but so far nothing is calling it. We've managed to add a single JUnit test
+for the `updateSubscription` method:
+`updateSubscription_withExistingSubscriptionAndUpdatedFrequency_returnsUpdatedFrequency`. This test
+updates the frequency of an existing subscription, and verifies that the returned `Subscription` object
+indeed has the frequency updated.
 
-We heard there is an outstanding bug where we get a pretty unhelpful error message (something about some 'flags'?)
-when passing in a valid `customerId` but another invalid field to the **SUBSCRIBE** command. Can you track it down?
+Your job is to add more tests to cover the use cases.
 
-We do know that `SubscriptionDebugUtil` was written by an exceptionally perfect engineer and we can assume the code
-functions as intended. Let's keep our focus at the `SubscriptionService` and the calls it
-makes. We also have two dependencies that are owned by other teams, the `AmazonIdentityService` and the
-`AmazonProductService`. This code has been well tested and in production for many years. We can trust that it works as
-expected. There are some data sections below that will help you understand what data can be used to call into the
-`SubscriptionService`. With all of this in mind, happy hunting! Once you have identified the bug, its root cause, and
-what the expected behavior should be come back here to write the test case we need to ensure this bug does not occur
-again.
+## Review the code
 
-### Fix the bug
-Go make the fix! Once you have your fix in place, rerun your tests and watch them pass! Now you can put your feet up and
-relax. Take a break, and we'll squash some more bugs soon!
+Look at the javadoc for the `updateSubscription` method in
+`com.amazon.ata.unittesting.subscribeandsave.dao.SubscriptionFileStorage` (HINT: look under src/ in
+a package close to the one containing this README file
 
-### Write the test case
-Now, let's write a test case that would have caught the bug you just discovered.
-We'd like an error message something more like "Unrecognized ASIN", and perhaps the
-offending ASIN itself.
+Look at the existing test in `SubscriptionFileStorageTest` (same package as `SubscriptionFileTest`, but under
+the tst/ directory). Ask any questions you have about this test.
 
-1. Create a new file: tst/com/amazon/ata/debugging/subscribeandsave/bug_1_test_case.md
-1. Paste in the template below and add the *expected* behavior in the case you found (the bug will violate this)
+## What are the relevant test cases?
 
-```
-Class: <class with bug>
+Think about the top few test cases that this new method needs. Use the javadoc you read above, plus
+the existing test cases in
+`com.amazon.ata.unittesting.subscribeandsave.dao.SubscriptionFileStorageTest`
+(look under the tst/ directory).
 
-**[methodUnderTest] _ [testCondition] _ [expectedBehavior]**
- * **Description**: [short description of the test case]
- * GIVEN
-     * [bulleted list of relevant pre-conditions for the test to run (usually data you're setting up to test)]
- * WHEN
-     1. [ordered list of methods you will call with description of relevant arguments]
-     1. [most of your test cases will have a single WHEN item, but if you want more than one keep this line]
- * THEN
-     * [bulleted list of verifications that you will perform to see if the test case passes]
-```
+Be prepared to share some of your test cases in class discussion.
 
-### Automate the test case
-Now let's automate the test case you wrote above, and see the tests fail. Then you'll know you wrote the correct test.
-Open up the Test class that runs tests against the class where you discovered the bug.
+## Write your tests (and see if you can spot a bug!)
 
-1. Open the existing test class
-    1. For example, if the bug you found was in `SubscriptionService`, open `SubscriptionServiceTest`.
-    1. All of the Test classes are located in the `tst` directory.
-    1. HINT IntelliJ shortcut: hit command + 'o' keys and type in the class name you're looking for
-       (e.g. "SubscriptionServiceTest").
+1. Write 2 new unit tests for the `updateSubscription` method. See if any of those tests fail and reveal
+   a true bug. We hear reports that the frequency field doesn't seem to be getting updated when we update a
+   subscription and then try to get it again....Be sure to include this test case in your 2!
+1. See the Appendix at the bottom of this file for where to look for data!
+1. Add your tests to the bottom of the `SubscriptionFileStorageTest` class (there's a placeholder there for you)
+1. When you've written your new JUnit tests, commit and push your code.
+    * NOTE: The test case above should be failing!
+1. Add a code.amazon.com link to this commit to this activity's Canvas Quiz.
 
-1. Add your new test method
-    1. The test class should have at least one example test inside of it.
-    1. Add your new test method
-    1. Include a call to it in the `runAllTests()` method
+## Extension: If you spot a bug, fix the code!
 
-1. (Temporarily) restore the bug that you fixed above.
+1. See if you can fix the code and get your failing test(s) to pass.
+1. If you fix the bug, commit and push your code.
+1. Add a code.amazon.com link to this commit to this activity's Canvas Quiz.
 
-1. Verify that your test fails for the reason you expect
-    1. execute the tests by running the Test class's main method.
-    1. See the test fail, and make sure it fails the way that you expect, given the current bug.
-    1. When you are confident that the test is well written and your test
-       is failing for the right reason, time to fix (again)!
+## Super-Extension: Integrate the SubscriptionFileStorage into SNS
 
-1. Fix the bug again and verify that tests pass!
+1. Go ahead and see if you can use the new `updateSubscription` method in the `SubscriptionDAO` and
+   `SubscriptionService` classes to implement the update Subscription API.
+1. Create a unit test for SubscriptionService to verify that subscriptions can be successfully updated
+   (the same scenario that had the bug above). Add to the existing `SubscriptionServiceTest` test class
+   in the tst/ directory.
+1. If you make any progress on this, commit and push your code.
+1. Add a code.amazon.com link to this commit to this activity's Canvas Quiz.
 
-##  2: Product manager tip
-### Find the bug
-Our product manager emailed us yesterday saying that their metrics have a subscription for 'Powerbeats Pro Totally
-Wireless Earphones - Black'. They let us know that this is not a SNS eligible product. They asked us to take a look and
-see what is going on. Give it a try. Why can we subscribe to these products?
+## Appendix: DATA
 
-This time, let's try to write the test FIRST. (This is something
-called "red-green testing", where you make the test fail ("red"),
-before you actually fix it ("green"). It's helpful to build up the
-set of test cases that we know have failed in the past, and to make
-sure that a similar bug doesn't return.)
+If you look at the top directory of this package, there's a directory called "resources". If you look inside
+there, you'll see `resources/unittesting/classroom/subscribeandsave/` and several text files inside it:
+* `catalog.json`: lists the products currently available for testing in the catalog (use this to find valid ASINs)
+* `customers.txt`: a list of valid test customer IDs
+* `subscriptions.csv.restore`: A list of existing test subscriptions that will be available every time you run
+  your tests.
 
-### Write the test case
-Now, let's write a test case that would have caught the bug you just discovered.
-
-1. Create a new file: tst/com/amazon/ata/debugging/subscribeandsave/bug_2_test_case.md
-1. Paste in the template below and add the *expected* behavior in the case you found (the bug will violate this)
-
-```
-Class: <class with bug>
-
-**[methodUnderTest] _ [testCondition] _ [expectedBehavior]**
- * **Description**: [short description of the test case]
- * GIVEN
-     * [bulleted list of relevant pre-conditions for the test to run (usually data you're setting up to test)]
- * WHEN
-     1. [ordered list of methods you will call with description of relevant arguments]
-     1. [most of your test cases will have a single WHEN item, but if you want more than one keep this line]
- * THEN
-     * [bulleted list of verifications that you will perform to see if the test case passes]
-```
-
-### Automate the test case
-Now let's automate the test case you wrote above, and see the tests fail. Then you'll know you wrote the correct test.
-Open up the Test class that runs tests against the class where you discovered the bug.
-
-1. Open the existing test class
-    1. For example, if the bug you found was in `SubscriptionService`, open `SubscriptionServiceTest`.
-    1. All of the Test classes are located in the `tst` directory.
-    1. HINT IntelliJ shortcut: hit command + 'o' keys and type in the class name you're looking for
-       (e.g. "SubscriptionServiceTest").
-
-1. Add your new test method
-    1. The test class should have at least one example test inside of it.
-    1. Add your new test method
-    1. Include a call to it in the `runAllTests()` method
-
-1. Verify that your test fails for the reason you expect
-    1. execute the tests by running the Test class's main method.
-    1. See the test fail, and make sure it fails the way that you expect, given the current bug.
-    1. Once you are confident the test is well written and your tests is failing we can move on to fixing the bug,
-       which hopefully will fix your test!
-
-### Fix the bug
-Go make the fix! Once you have your fix inplace, rerun your tests and watch them pass! Now you can put your feet up and
-relax. Take a break, and we'll squash some more bugs soon!
-
-## EXTENSION: Step 3: Did We Create It Wrong?
-
-### Find the bug
-The `SubscriptionDebugUtil` seems to be returning some unusual responses when we look up a newly created subscription.
-When we subscribe we see a well formatted Subscription:
-`Subscription found: {SubscriptionId: 1dcf9a20-d1c6-41e3-8efd-caa542e231c1, CustomerId: amzn1.account.AEZI3A063427738YROOFT8WCXKDE, Asin: B00ILBUEVK, Frequency: 2}`
-However, when we query for that Subscription we see:
-`Subscription found: {SubscriptionId: 1dcf9a20-d1c6-41e3-8efd-caa542e231c1, CustomerId: B00ILBUEVK, Asin: amzn1.account.AEZI3A063427738YROOFT8WCXKDE, Frequency: 2}`
-
-Reminder: the command to query a subscription by ID is "QUERY"
-
-Go take a look and see if you can figure out what is going on.
-
-### Write the test case
-
-Now, let's write a test case that would have caught the bug you just discovered.
-
-1. Create a new file: tst/com/amazon/ata/debugging/subscribeandsave/bug_3_test_case.md
-1. Paste in the template below and add the *expected* behavior in the case you found (the bug will violate this)
-
-```
-Class: <class with bug>
-
-**[methodUnderTest] _ [testCondition] _ [expectedBehavior]**
- * **Description**: [short description of the test case]
- * GIVEN
-     * [bulleted list of relevant pre-conditions for the test to run (usually data you're setting up to test)]
- * WHEN
-     1. [ordered list of methods you will call with description of relevant arguments]
-     1. [most of your test cases will have a single WHEN item, but if you want more than one keep this line]
- * THEN
-     * [bulleted list of verifications that you will perform to see if the test case passes]
-```
-
-### Automate the test case
-Now let's automate the test case you wrote above, and see the tests fail. Then you'll know you wrote the correct test.
-Open up the Test class that runs tests against the class where you discovered the bug.
-
-1. Open the existing test class
-    1. For example, if the bug you found was in `SubscriptionService`, open `SubscriptionServiceTest`.
-    1. All of the Test classes are located in the `tst` directory.
-    1. HINT IntelliJ shortcut: hit command + 'o' keys and type in the class name you're looking for
-       (e.g. "SubscriptionServiceTest").
-
-1. Add your new test method
-    1. The test class should have at least one example test inside of it.
-    1. Add your new test method
-    1. Include a call to it in the `runAllTests()` method
-
-1. Verify that your test fails for the reason you expect
-    1. execute the tests by running the Test class's main method.
-    1. See the test fail, and make sure it fails the way that you expect, given the current bug.
-    1. Once you are confident the test is well written and your tests is failing we can move on to fixing the bug,
-       which hopefully will fix your test!
-
-**There might be tests to write in more than one Test class. Where else might you create a test?**
-
-### Fix the bug
-Go make the fix!
-
-Once you have your fix in place, rerun your tests and watch them pass!
-
-## Data
-Below we have provided you with helpful data for your debugging. We have listed below some valid test Amazon Customers.
-You will only need to use the `customerId` values when creating a subscription on their behalf. We have also provided
-you with some catalog data, a list of products along with their asin's and SNS eligibility.
-
-###Amazon Customers
-- Pepé Silvia
-  - Customer ID:`amzn1.account.AEZI3AHHDGUJ43KCFVME2OQAU4GB`
-- Carol Long
-  - Customer ID:`amzn1.account.AEZI3A063427738YROOFT8WCXKDE`
-- Draymond Jennings
-  - Customer ID:`amzn1.account.AEZI3A06339413S37ZHKJQUEGLC4`
-- Chelsey Chu
-  - Customer ID:`amzn1.account.AEZI3A0633629PUR8GGGS9ZSC3DO`
-- Seylah Reider
-  - Customer ID:`amzn1.account.AEZI3A09486461G3DRR0VQPQHQ9I`
-- Sush Patel
-  - Customer ID:`amzn1.account.AEZI3A027560538W420H09ACTDP2`
-
-###Catalog
-1. **Product**: `Sharpie Tank Style Highlighters`
-   - asin:`B00006IEJB`
-   - subscribe & save available:`true`
-1. **Product**:`NatureWise Curcumin Turmeric 2250mg`
-   - asin:`B01BMDAVIY`
-   - subscribe & save available:`true`
-1. **Product**:`Stealth Cam 12.0 Infrared Megapixel Trail Camera`
-   - asin:`B072PR8QNN`
-   - subscribe & save available:`false`
-1. **Product**:`Powerbeats Pro Totally Wireless Earphones - Black`
-   - asin:`B07R5QD598`
-   - subscribe & save available:`false`
-1. **Product**:`Kindle Oasis Water-Safe Fabric Cover, Charcoal Black`
-   - asin:`B079BG3LQF`
-   - subscribe & save available:`false`
-1. **Product**:`BIOLAGE Colorlast Shampoo For Color-Treated Hair`
-   - asin:`B00ILBUEVK`
-   - subscribe & save available:`true`
-
-## Troubleshooting
-* If you get an error saying a subscription already exists for the customer ID / ASIN combination
-  (either from running tests or using the DebugUtil), you can reset the "datastore" to its original
-  state (you'll probably need to do this between test runs). This tells git to restore a particular
-  file to the state it was in at the last commit in your repository:
-    * `git checkout resources/subscriptions.csv`
-    * (Or you can use the contents of subscriptions.csv.restore to replace subscriptions.csv)
-* If you get an error mentioning failing to connect to Identity Services or failing to find a file at ./resources/...
-  or ./tst/... To get this working using the "play" button in IntelliJ, you will need to go through the following steps:
-    1. In the left panel, double-click the class you're trying to run the main() method in
-    1. Click the "play" button next to either the class name, SubscriptionDebugUtil, or the main method. This will fail.
-    1. In the menu click "Run" > "Edit Configurations..."
-    1. On the left side of the pop-up, you should see "SubscriptionDebugUtil" under "Application". Make sure that is selected.
-    1. On the right side of the pop-up, make sure the "Configuration" tab is selected.
-    1. For "Working directory" select the drop down arrow and select $MODULE_WORKING_DIR$.
-    1. "Apply" the changes and "OK" out of the pop-up.
-    1. Try rerunning the main method using the "play" button. You should see
-       ```
-       Welcome to the SNS debug util. You can create and look up subscriptions here.
-       ```
-* If you get JSON parsing errors (complaining about unexpected EOF or something), check
-  your resources/catalog.json file. Are each product on one line, or is there one line per attribute of each product? If split
-  across lines:
-  1. Right click on the file and click "Mark as plain text"
-  1. Edit the file so that there is one { ... } per line (there should be 6 of them)
+If you really want, you can add records to these if it helps you. We suggest that you do not modify or remove
+of the data in these files, as this might cause tests to start failing!
