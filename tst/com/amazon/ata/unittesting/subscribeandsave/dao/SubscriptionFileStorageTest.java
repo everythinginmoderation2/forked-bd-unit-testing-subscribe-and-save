@@ -5,6 +5,7 @@ import com.amazon.ata.unittesting.subscribeandsave.test.util.SubscriptionRestore
 import com.amazon.ata.unittesting.subscribeandsave.types.Subscription;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -110,6 +111,8 @@ public class SubscriptionFileStorageTest {
                      "Getting a subscription should return a subscription with correct frequency");
     }
 
+    //Update subscription
+
     @Test
     void updateSubscription_withExistingSubscriptionAndUpdatedFrequency_returnsUpdatedFrequency() {
         // GIVEN - An existing subscription with frequency 1, updated to frequency 2
@@ -128,8 +131,55 @@ public class SubscriptionFileStorageTest {
         assertEquals(newFrequency, result.getFrequency());
     }
 
+    //Attempt with null subscription parameter
+    @Test
+    void updateSubscription_withNullSubscriptionParam_throwsIllegalArgumentException() {
+        // GIVEN - A null parameter, with an attempt to update frequency to 2
+        int newFrequency = 2;
+        Subscription updatedSubscription = null;
 
-    // PARTICIPANTS: Remove this line and add your updateSubscription() tests here.
+        //WHEN
+        //THEN
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                subscriptionFileStorage.updateSubscription(null),
+                "Expected updateSubscription with null parameter to throw IllegalArgumentException");
+    }
+
+    //Attempt with null subscription ID
+    @Test
+    void updateSubscription_withNullSubscription_throwsIllegalArgumentException() {
+        // GIVEN - A subscription with ID equal to null, with an attempt to update frequency to 2
+        int newFrequency = 2;
+        Subscription updatedSubscription = Subscription.builder()
+                .withSubscriptionId(null)
+                .withCustomerId("amzn1.account.AEZI3A09486461G3DRR0VQPQHQ9I")
+                .withAsin("B01BMDAVIY")
+                .withFrequency(newFrequency)
+                .build();
+        //WHEN
+        //THEN
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                        subscriptionFileStorage.updateSubscription(updatedSubscription),
+                "Expected updateSubscription with null subscriptionID to throw IllegalArgumentException");
+    }
+
+    //Attempt with subscription not found by Id
+    @Test
+    void updateSubscription_subscriptionNotFoundByID_throwsIllegalArgumentException() {
+        // GIVEN - A subscription with unfamiliar ID, with an attempt to update frequency to 2
+        int newFrequency = 2;
+        Subscription updatedSubscription = Subscription.builder()
+                .withSubscriptionId("chicken")
+                .withCustomerId("amzn1.account.AEZI3A09486461G3DRR0VQPQHQ9I")
+                .withAsin("B01BMDAVIY")
+                .withFrequency(newFrequency)
+                .build();
+        //WHEN
+        //THEN
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                        subscriptionFileStorage.updateSubscription(updatedSubscription),
+                "Expected unfamiliar subscription ID to throw IllegalArgumentException");
+    }
 
 
     @BeforeEach
